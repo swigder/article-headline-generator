@@ -1,10 +1,8 @@
 import csv
 import json
 import random
-from collections import namedtuple
 
-
-Sample = namedtuple('Sample', ['headline', 'body'])
+from data.language import Sample
 
 
 def read_event_registry_data(*files):
