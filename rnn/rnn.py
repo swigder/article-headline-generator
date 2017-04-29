@@ -56,7 +56,7 @@ class DecoderRNN(nn.Module):
 
 
 class AttnDecoderRNN(nn.Module):
-    def __init__(self, hidden_size, output_size, n_layers=1, dropout_p=0.1, max_length=MAX_LENGTH):
+    def __init__(self, hidden_size, output_size, n_layers=1, dropout_p=0.1, max_length=MAX_LENGTH+1):
         super(AttnDecoderRNN, self).__init__()
         self.hidden_size = hidden_size
         self.output_size = output_size
@@ -96,7 +96,7 @@ teacher_forcing_ratio = 0.5
 
 
 def train(input_variable, target_variable, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion,
-          max_length=MAX_LENGTH):
+          max_length=MAX_LENGTH+1):
     encoder_hidden = encoder.init_hidden()
 
     encoder_optimizer.zero_grad()
@@ -176,7 +176,7 @@ def train_epochs(samples, lang, encoder, decoder, n_epochs, print_every=1000, pl
     return plot_losses
 
 
-def evaluate(encoder, decoder, language, article, max_length=MAX_LENGTH):
+def evaluate(encoder, decoder, language, article, max_length=MAX_LENGTH+1):
     input_variable = language.variable_from_text(article)
     input_length = input_variable.size()[0]
     encoder_hidden = encoder.init_hidden()

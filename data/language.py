@@ -56,9 +56,11 @@ def unicode_to_ascii(s):
     )
 
 
-def normalize(string):
+def normalize(string, max_length=None):
     string = unicode_to_ascii(string.lower().strip())
     string = re.sub(r"([.!?])", r" \1", string)
     string = re.sub(r"[^a-zA-Z\d.!?]+", r" ", string)
     string = re.sub(r"\d\d\d+", r"#####", string)
+    if max_length:
+        string = ' '.join(string.split(' ')[:max_length])
     return string

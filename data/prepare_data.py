@@ -9,7 +9,7 @@ def filter_data(data_set):
 def prepare_data(data_set):
     lang = Lang()
     print("Read %s data samples" % len(data_set))
-    data_set = [Sample(headline=normalize(sample.headline[:MAX_LENGTH]), body=normalize(sample.body[:MAX_LENGTH])) for sample in data_set]
+    data_set = [Sample(headline=normalize(sample.headline, MAX_LENGTH), body=normalize(sample.body, MAX_LENGTH)) for sample in data_set]
     data_set = filter_data(data_set)
     print("Trimmed to %s data samples" % len(data_set))
     print("Counting words...")
