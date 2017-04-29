@@ -12,14 +12,15 @@ Sample = namedtuple('Sample', ['headline', 'body'])
 
 SOS_token = 0
 EOS_token = 1
+OOV_token = 2
 
 
 class Lang:
     def __init__(self):
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {0: "SOS", 1: "EOS"}
-        self.n_words = 2  # Count SOS and EOS
+        self.index2word = {0: "SOS", 1: "EOS", 2: "OOV"}
+        self.n_words = 3  # Count SOS and EOS and OOV
 
     def add_sample(self, sample):
         for word in sample.headline.split(' '):
@@ -37,7 +38,7 @@ class Lang:
             self.word2count[word] += 1
 
     def indexes_from_text(self, text):
-        return [self.word2index[word] for word in text.split(' ')]
+        return [self.word2index[word] if self.word2count[word] > 0 else OOV_token for word in text.split(' ')]
 
     def variable_from_text(self, text):
         indexes = self.indexes_from_text(text)
