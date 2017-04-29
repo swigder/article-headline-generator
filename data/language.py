@@ -37,12 +37,15 @@ class Lang:
             self.word2count[word] += 1
 
     def indexes_from_text(self, text):
-        return [self.word2index[word] for word in normalize(text).split(' ')]
+        return [self.word2index[word] for word in text.split(' ')]
 
     def variable_from_text(self, text):
         indexes = self.indexes_from_text(text)
         indexes.append(EOS_token)
         return Variable(torch.LongTensor(indexes).view(-1, 1))
+
+    def variables_from_sample(self, sample):
+        return Sample(headline=self.variable_from_text(sample.headline), body=self.variable_from_text(sample.body))
 
 
 # Turn a Unicode string to plain ASCII, thanks to http://stackoverflow.com/a/518232/2809427

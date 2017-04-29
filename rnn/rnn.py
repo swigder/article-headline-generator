@@ -1,10 +1,15 @@
+import time
 from torch import nn, torch
 from torch.autograd import Variable
 import torch.nn.functional as F
 
-from random import random
+import random
 
 from data.language import EOS_token, SOS_token
+from util.time import time_since
+
+
+MAX_LENGTH = 1000
 
 
 class EncoderRNN(nn.Module):
@@ -139,7 +144,7 @@ def train(input_variable, target_variable, encoder, decoder, encoder_optimizer, 
     return loss.data[0] / target_length
 
 
-def train_epochs(pairs, input_lang, output_lang, encoder, decoder, n_epochs, print_every=1000, plot_every=100, learning_rate=0.01):
+def train_epochs(samples, lang, encoder, decoder, n_epochs, print_every=1000, plot_every=100, learning_rate=0.01):
     start = time.time()
     plot_losses = []
     print_loss_total = 0  # Reset every print_every
@@ -147,13 +152,13 @@ def train_epochs(pairs, input_lang, output_lang, encoder, decoder, n_epochs, pri
 
     encoder_optimizer = torch.optim.SGD(encoder.parameters(), lr=learning_rate)
     decoder_optimizer = torch.optim.SGD(decoder.parameters(), lr=learning_rate)
-    training_pairs = [variables_from_pair(random.choice(pairs), input_lang, output_lang) for i in range(n_epochs)]
+    training_samples = [lang.variables_from_sample(random.choice(samples)) for _ in range(n_epochs)]
     criterion = nn.NLLLoss()
 
     for epoch in range(1, n_epochs + 1):
-        training_pair = training_pairs[epoch - 1]
-        input_variable = training_pair[0]
-        target_variable = training_pair[1]
+        sample = training_samples[epoch - 1]
+        input_variable = sample.body
+        target_variable = sample.headline
         loss = train(input_variable, target_variable, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion)
         print_loss_total += loss
         plot_loss_total += loss
@@ -172,7 +177,7 @@ def train_epochs(pairs, input_lang, output_lang, encoder, decoder, n_epochs, pri
 
 
 def evaluate(encoder, decoder, language, article, max_length=MAX_LENGTH):
-    input_variable = language.variable_from_sentence(article)
+    input_variable = language.variable_from_text(article)
     input_length = input_variable.size()[0]
     encoder_hidden = encoder.init_hidden()
 
