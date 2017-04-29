@@ -9,7 +9,7 @@ from data.language import EOS_token, SOS_token
 from util.time import time_since
 
 
-MAX_LENGTH = 1000
+MAX_LENGTH = 100
 
 
 class EncoderRNN(nn.Module):

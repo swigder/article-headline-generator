@@ -22,5 +22,5 @@ def evaluate_randomly(encoder, decoder, n=10):
 hidden_size = 256
 encoder1 = EncoderRNN(lang.n_words, hidden_size)
 attn_decoder1 = AttnDecoderRNN(hidden_size, lang.n_words, 1, dropout_p=0.1)
-train_epochs(data_set, lang, encoder1, attn_decoder1, n_epochs=100, print_every=1)
+train_epochs(data_set, lang, encoder1, attn_decoder1, n_epochs=100, print_every=5)
 evaluate_randomly(encoder1, attn_decoder1)
