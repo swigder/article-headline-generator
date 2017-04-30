@@ -3,7 +3,7 @@ from rnn.rnn import MAX_LENGTH
 
 
 def filter_data(data_set):
-    return data_set
+    return data_set[:50]
 
 
 def prepare_data(data_set):

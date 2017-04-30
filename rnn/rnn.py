@@ -9,7 +9,7 @@ from data.language import EOS_token, SOS_token
 from util.time import time_since
 
 
-MAX_LENGTH = 100
+MAX_LENGTH = 500
 
 
 class EncoderRNN(nn.Module):
@@ -144,7 +144,7 @@ def train(input_variable, target_variable, encoder, decoder, encoder_optimizer, 
     return loss.data[0] / target_length
 
 
-def train_epochs(samples, lang, encoder, decoder, n_epochs, print_every=1000, plot_every=100, learning_rate=0.01):
+def train_epochs(samples, lang, encoder, decoder, n_epochs, print_every=1000, plot_every=100, learning_rate=0.02):
     start = time.time()
     plot_losses = []
     print_loss_total = 0  # Reset every print_every
