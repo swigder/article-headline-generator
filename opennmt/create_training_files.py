@@ -1,5 +1,7 @@
 import time
 
+from os import listdir, path
+
 from data.read_data import read_event_registry_data, read_crowdflower_economic_data, read_crowdflower_wikipedia_data
 
 
@@ -15,11 +17,8 @@ def write_samples_to_opennmt_format(samples_training, samples_validation, locati
 
 
 if __name__ == '__main__':
-    samples = read_event_registry_data('../../news-retriever/data/data.json',
-                                       '../../news-retriever/data/data-1000.json',
-                                       '../../news-retriever/data/data-20170428-144403.json',
-                                       '../../news-retriever/data/data-20170428-144520.json',
-                                       '../../news-retriever/data/data-20170428-144543.json')
+    er_dir = '../../news-retriever/data'
+    samples = read_event_registry_data(*[path.join(er_dir, f) for f in listdir(er_dir) if f.endswith('.json')])
     samples += read_crowdflower_economic_data('../../data/Full-Economic-News-DFE-839861.csv')
     samples += read_crowdflower_wikipedia_data('../../data/News-article-wikipedia-DFE.csv')
     total_samples = len(samples)
@@ -27,6 +26,6 @@ if __name__ == '__main__':
     print('Total samples: {}, training {}, validation {}', total_samples, training_samples, total_samples - training_samples)
     write_samples_to_opennmt_format(samples_training=samples[:training_samples],
                                     samples_validation=samples[training_samples:],
-                                    location='/Users/xx/Documents/school/kth/dl/opennmt/data/own/')
+                                    location='/Users/xx/Documents/school/kth/dl/opennmt/data/own')
 
 
