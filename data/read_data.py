@@ -1,6 +1,8 @@
 import csv
 import json
 import random
+from bs4 import BeautifulSoup
+
 
 from data.language import Sample
 
@@ -20,6 +22,16 @@ def read_event_registry_data(*files):
     return articles
 
 
+def read_reuters_data(*files):
+    articles = []
+    for file in files:
+        soup = BeautifulSoup(open(file), 'html.parser')
+        for article in soup.find_all('reuters'):
+            if article.title and article.body:
+                articles.append(Sample(headline=article.title.text, body=article.body.text))
+    return articles
+
+
 def read_crowdflower_data(*files, headline_name, text_name):
     articles = []
     for file in files:
@@ -32,7 +44,6 @@ def read_crowdflower_data(*files, headline_name, text_name):
                     body = sample.index(text_name)
                     continue
                 articles.append(Sample(headline=sample[headline], body=sample[body]))
-
     return articles
 
 
@@ -57,7 +68,7 @@ if __name__ == '__main__':
     print('\nCrowdflower economic', len(samples), 'samples')
     print(random.choice(samples))
 
-    samples = read_crowdflower_wikipedia_data('../../data/News-article-wikipedia-DFE.csv')
-    print('\nCrowdflower Wikipedia', len(samples), 'samples')
+    samples = read_reuters_data('../../data/reuters21578/reut2-000.sgm')
+    print('\nReuters', len(samples), 'samples')
     print(random.choice(samples))
 
