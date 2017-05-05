@@ -25,10 +25,13 @@ def read_event_registry_data(*files):
 def read_reuters_data(*files):
     articles = []
     for file in files:
-        soup = BeautifulSoup(open(file), 'html.parser')
-        for article in soup.find_all('reuters'):
-            if article.title and article.body:
-                articles.append(Sample(headline=article.title.text, body=article.body.text))
+        try:
+            soup = BeautifulSoup(open(file), 'html.parser')
+            for article in soup.find_all('reuters'):
+                if article.title and article.body:
+                    articles.append(Sample(headline=article.title.text, body=article.body.text))
+        except:
+            print('Error processing file:', file)
     return articles
 
 
