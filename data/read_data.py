@@ -7,10 +7,14 @@ from data.language import Sample
 
 def read_event_registry_data(*files):
     articles = []
+    processed = set()
     for file in files:
         with open(file) as data_file:
             data = json.load(data_file)
             [articles.append(Sample(headline=v['info']['title'], body=v['info']['body']))
+             for (k, v) in data.items()
+             if 'error' not in v.keys() and v['info']['id'] not in processed]
+            [processed.add(v['info']['id'])
              for (k, v) in data.items()
              if 'error' not in v.keys()]
     return articles
