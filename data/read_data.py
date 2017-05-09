@@ -14,7 +14,8 @@ def read_event_registry_data(*files):
     source_suffixes = [' \| .*', ' - Amateur Photographer', ' - Kabayan Weekly', ' - Daily Journal',
                        ' - Mobile News Online', ' - The Lethbridge Herald - News and Sports from around Lethbridge',
                        ' - Vanguard News', ' - Futurity', ' - CFN Media', ' - Kuwait Times', ' - Voice of Asia Online',
-                       ' - Cyprus Mail', ' - Daily Post Nigeria', ' - MoneyWeek', ' - BBC News']
+                       ' - Cyprus Mail', ' - Daily Post Nigeria', ' - MoneyWeek', ' - BBC News', ' - Reuters Africa',
+                       ' - Vogue']
 
     clean = lambda h: re.sub('|'.join(source_suffixes), '', h)
 
