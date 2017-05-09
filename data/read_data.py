@@ -8,6 +8,7 @@ from data.language import Sample
 
 
 def read_event_registry_data(*files):
+    # output from news-retriever project
     articles = []
     processed = set()
     for file in files:
@@ -23,6 +24,7 @@ def read_event_registry_data(*files):
 
 
 def read_reuters_data(*files):
+    # http://www.daviddlewis.com/resources/testcollections/reuters21578/
     articles = []
     for file in files:
         try:
@@ -51,10 +53,12 @@ def read_crowdflower_data(*files, headline_name, text_name):
 
 
 def read_crowdflower_economic_data(*files):
+    # https://www.crowdflower.com/wp-content/uploads/2016/03/Full-Economic-News-DFE-839861.csv
     return read_crowdflower_data(*files, headline_name='headline', text_name='text')
 
 
 def read_crowdflower_wikipedia_data(*files):
+    # https://www.crowdflower.com/wp-content/uploads/2016/03/News-article-wikipedia-DFE.csv
     return read_crowdflower_data(*files, headline_name='article', text_name='newdescp')
 
 
