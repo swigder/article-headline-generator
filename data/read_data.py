@@ -1,6 +1,8 @@
 import csv
 import json
 import random
+
+import re
 from bs4 import BeautifulSoup
 
 
@@ -9,14 +11,23 @@ from data.language import Sample
 
 def read_event_registry_data(*files):
     # output from news-retriever project
+    source_suffixes = [' \| .*', ' - Amateur Photographer', ' - Kabayan Weekly', ' - Daily Journal',
+                       ' - Mobile News Online', ' - The Lethbridge Herald - News and Sports from around Lethbridge',
+                       ' - Vanguard News', ' - Futurity', ' - CFN Media', ' - Kuwait Times', ' - Voice of Asia Online',
+                       ' - Cyprus Mail', ' - Daily Post Nigeria', ' - MoneyWeek', ' - BBC News']
+
+    clean = lambda h: re.sub('|'.join(source_suffixes), '', h)
+
     articles = []
     processed = set()
     for file in files:
         with open(file) as data_file:
             data = json.load(data_file)
-            [articles.append(Sample(headline=v['info']['title'], body=v['info']['body']))
+            [articles.append(Sample(headline=clean(v['info']['title']), body=v['info']['body']))
              for (k, v) in data.items()
-             if 'error' not in v.keys() and v['info']['id'] not in processed]
+             if 'error' not in v.keys()
+             and v['info']['id'] not in processed
+             and v['info']['url'] is not 'http://www.theaustralian.com.au/video']
             [processed.add(v['info']['id'])
              for (k, v) in data.items()
              if 'error' not in v.keys()]

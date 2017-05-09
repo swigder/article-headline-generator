@@ -28,8 +28,7 @@ def remove_duplicate_headlines(samples):
 
 if __name__ == '__main__':
     er_dir = '../../news-retriever/data'
-    samples = []
-    samples += read_event_registry_data(*[path.join(er_dir, f) for f in listdir(er_dir) if f.endswith('.json')])
+    samples = read_event_registry_data(*[path.join(er_dir, f) for f in listdir(er_dir) if f.endswith('.json')])
     samples += read_crowdflower_economic_data('../../data/Full-Economic-News-DFE-839861.csv')
     samples += read_crowdflower_wikipedia_data('../../data/News-article-wikipedia-DFE.csv')
     reuters_dir = '../../data/reuters21578'
@@ -37,9 +36,9 @@ if __name__ == '__main__':
     print('Started with', len(samples), 'samples...')
     remove_duplicate_headlines(samples)
     print('Trimmed to', len(samples), 'samples by removing duplicate headlines')
-    for sample in samples:
-        if 'Turkish singer' in sample.headline:
-            print(sample)
+    shuffle(samples)
+    for i in range(100):
+        print(samples[i].headline)
     total_samples = len(samples)
     training_samples = int(total_samples * .8)
     print('Total samples: {}, training {}, validation {}', total_samples, training_samples, total_samples - training_samples)
