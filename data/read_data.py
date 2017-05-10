@@ -15,7 +15,7 @@ def read_event_registry_data(*files):
                        ' - Mobile News Online', ' - The Lethbridge Herald - News and Sports from around Lethbridge',
                        ' - Vanguard News', ' - Futurity', ' - CFN Media', ' - Kuwait Times', ' - Voice of Asia Online',
                        ' - Cyprus Mail', ' - Daily Post Nigeria', ' - MoneyWeek', ' - BBC News', ' - Reuters Africa',
-                       ' - Vogue']
+                       ' - Vogue', ' - World News', ' - Ariana News']
 
     clean = lambda h: re.sub('|'.join(source_suffixes), '', h)
 
