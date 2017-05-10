@@ -3,6 +3,7 @@ import time
 from os import listdir, path
 from random import shuffle
 
+from data.normalize_data import normalize_samples
 from data.read_data import read_event_registry_data, read_crowdflower_economic_data, read_crowdflower_wikipedia_data, \
     read_reuters_data
 
@@ -34,6 +35,8 @@ if __name__ == '__main__':
     reuters_dir = '../../data/reuters21578'
     samples += read_reuters_data(*[path.join(reuters_dir, f) for f in listdir(reuters_dir) if f.endswith('.sgm')])
     print('Started with', len(samples), 'samples...')
+    print('Normalizing...')
+    samples = normalize_samples(samples, max_length=100)
     remove_duplicate_headlines(samples)
     print('Trimmed to', len(samples), 'samples by removing duplicate headlines')
     shuffle(samples)
