@@ -1,21 +1,23 @@
 import time
 
 from os import listdir, path
-from random import shuffle
+from random import shuffle, seed
 
-from data.normalize_data import normalize_samples
+from data.process_data import normalize_samples, pos_tag_samples
 from data.read_data import read_event_registry_data, read_crowdflower_economic_data, read_crowdflower_wikipedia_data, \
     read_reuters_data
 
 
-def write_samples_to_opennmt_format(samples_training, samples_validation, location):
+def write_samples_to_opennmt_format(samples_training, samples_validation, location, prefix=''):
+    if prefix:
+        prefix += '-'
     for name, samples in {'training': samples_training, 'validation': samples_validation}.items():
         headlines, articles = map(list, zip(*samples))
         articles = [article.split('\n', 1)[0] for article in articles]
 
-        with open('{}/{}-samples.txt'.format(location, name), mode='wt', encoding='utf-8') as myfile:
+        with open('{}/{}{}-samples.txt'.format(location, prefix, name), mode='wt', encoding='utf-8') as myfile:
             myfile.write('\n'.join(articles))
-        with open('{}/{}-target.txt'.format(location, name), mode='wt', encoding='utf-8') as myfile:
+        with open('{}/{}{}-target.txt'.format(location, prefix, name), mode='wt', encoding='utf-8') as myfile:
             myfile.write('\n'.join(headlines))
 
 
@@ -39,6 +41,9 @@ if __name__ == '__main__':
     samples = normalize_samples(samples, max_length=100)
     remove_duplicate_headlines(samples)
     print('Trimmed to', len(samples), 'samples by removing duplicate headlines')
+    # uncomment to pos tag
+    # samples = pos_tag_samples(samples)
+    seed(448)
     shuffle(samples)
     for i in range(100):
         print(samples[i].headline)
@@ -47,6 +52,6 @@ if __name__ == '__main__':
     print('Total samples: {}, training {}, validation {}', total_samples, training_samples, total_samples - training_samples)
     write_samples_to_opennmt_format(samples_training=samples[:training_samples],
                                     samples_validation=samples[training_samples:],
-                                    location='/Users/xx/Files/opennmt/data/own')
+                                    location='/Users/xx/Files/opennmt/data/own', prefix='pos')
 
 
