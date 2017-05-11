@@ -1,9 +1,35 @@
+import json
 from itertools import chain
+import re
+from bs4 import BeautifulSoup
 
 from lxml import html
+from os import listdir, path
 
 from data.language import Sample
+from data.read_data import read_event_registry_data
 
+
+def read_cnn_data(files):
+    articles = []
+    cnn_len_title = len(' - CNN.com')
+    cnn_len_body=len('(CNN) -- ')
+    for file in files:
+        try:
+            soup = BeautifulSoup(open(file), 'html.parser')
+            title = soup.find('title').text
+            if title.endswith(' - CNN.com'):
+                title= title[:-cnn_len_title]
+            with open(file) as f:
+                story_html = f.read()
+                body=ParseHtml(story_html,'cnn')
+                if body.startswith('(CNN) -- '):
+                 body = body[cnn_len_body:]
+            articles.append(dict(headline=title, body=body))
+        except:
+            print(file)
+
+    return articles
 
 def ParseHtml(story, corpus): # from
     """Parses the HTML of a news story.
@@ -113,11 +139,14 @@ def ParseHtml(story, corpus): # from
     return '\n'.join(paragraphs)
 
 if __name__ == '__main__':
-    url = './cnn/00a2aef1e18d125960da51e167a3d22ed8416c09.html'
-    with open(url) as f:
-        story_html = f.read()
-    corpus = 'cnn'
-    a = ParseHtml(story_html, corpus)
-    sample = Sample(headline='', body=a)
-    print(a)
+    # url = '/Users/kidcom/PycharmProjects/pytorch-tutorial/cnn/00a2aef1e18d125960da51e167a3d22ed8416c09.html'
+    # samples = read_cnn_data(url)
+    # print(samples)
+    # print(json.dumps(samples))
+    # with open('../data/cnn.json', 'w') as fp:
+    #     json.dump(samples, fp, indent=4)
 
+    er_dir = '/Users/kidcom/PycharmProjects/pytorch-tutorial/cnn'
+    samples =read_cnn_data([path.join(er_dir, f) for f in listdir(er_dir) if f.endswith('.html')])
+    with open('../data/cnn.json', 'w') as fp:
+        json.dump(samples, fp, indent=4)
