@@ -20,7 +20,7 @@ def normalize(string, max_length=None):
         string = ' '.join(word_tokenize(string)[:max_length])
     string = re.sub(r"([.!?])", r" \1", string)
     string = re.sub(r"[^a-zA-Z\d.!?]+", r" ", string)
-    string = re.sub(r"\d\d\d\d+", r"#####", string)
+    string = re.sub(r"\d\d\d\d+", r"#", string)
     return string
 
 
@@ -31,10 +31,10 @@ def normalize_samples(samples, max_length=None):
     return normalized_samples
 
 
-def pos_tag_samples(samples):
+def pos_tag_samples(samples, tag_tgt=False):
     pos = lambda s: " ".join(['{}{}{}'.format(w, "\N{Halfwidth Forms Light Vertical}", t) for w, t in pos_tag(word_tokenize(s))])
 
     tagged_samples = []
     for sample in samples:
-        tagged_samples.append(Sample(headline=pos(sample.headline), body=pos(sample.body)))
+        tagged_samples.append(Sample(headline=pos(sample.headline) if tag_tgt else sample.headline, body=pos(sample.body)))
     return tagged_samples
