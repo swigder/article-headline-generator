@@ -74,7 +74,7 @@ def split(samples, validation_pct, test_pct):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-o', '--output', type=str, help='output directory')
-    parser.add_argument('-x', '--prefix', type=str, help='output filename prefix')
+    parser.add_argument('-x', '--prefix', type=str, help='output filename prefix', default='')
     parser.add_argument('-m', '--max_length', type=int, help='max length of src', default=100)
     parser.add_argument('-p', '--pos_tag', type=bool, help='POS tag the source data', default=False)
     parser.add_argument('-pt', '--pos_tag_tgt', type=bool, help='POS tag the target', default=False)
