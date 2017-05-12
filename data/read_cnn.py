@@ -26,7 +26,6 @@ def read_cnn_data(input_dir, output_dir, batch_size=5000):
     error_docs = 0
     for batch_i, batch in enumerate(chunks(files, batch_size)):
         print('Processing batch {}/{}'.format(batch_i+1, num_batches))
-        error_docs_batch = 0
         articles = []
         for file_i, file in enumerate(batch):
             if file_i and not file_i % 1000:
@@ -36,14 +35,12 @@ def read_cnn_data(input_dir, output_dir, batch_size=5000):
             except Exception as e:
                 print('Error processing file {}:{} at {}'.format(batch_i, file_i, file))
                 print(e)
-                error_docs_batch += 1
-        print('Successful docs in batch: {}, error docs in batch: {}'.format(len(batch), len(batch) - error_docs_batch))
-        error_docs += error_docs_batch
+                error_docs += 1
 
         with open(path.join(output_dir, 'cnn-{}.json'.format(batch_i+1)), 'w') as fp:
             json.dump(articles, fp, indent=4)
 
-    print('Successful docs total: {}, error docs total: {}'.format(len(files), len(files) - error_docs))
+    print('Successful docs: {}, error docs: {}'.format(len(files) - error_docs, error_docs))
 
 
 def read_file_guessing_charsets(file, charsets):
