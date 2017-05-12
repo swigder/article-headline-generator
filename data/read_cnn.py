@@ -26,11 +26,11 @@ def read_cnn_data(input_dir, output_dir, charset=None, batch_size=5000):
     cnn_len_body = len('(CNN) -- ')
     num_batches = ceil(len(files) / batch_size)
     error_docs = 0
-    for i, batch in enumerate(chunks(files, batch_size)):
-        print('Processing batch {}/{}'.format(i+1, num_batches))
+    for batch_i, batch in enumerate(chunks(files, batch_size)):
+        print('Processing batch {}/{}'.format(batch_i+1, num_batches))
         error_docs_batch = 0
         articles = []
-        for j, file in enumerate(batch):
+        for file_i, file in enumerate(batch):
             try:
                 with open(file, 'rb') as f:
                     story_bytes = f.read()
@@ -50,7 +50,7 @@ def read_cnn_data(input_dir, output_dir, charset=None, batch_size=5000):
         print('Successful docs in batch: {}, error docs in batch: {}', len(batch), len(batch) - error_docs_batch)
         error_docs += error_docs_batch
 
-        with open(path.join(output_dir, 'cnn-{}.json'.format(i+1)), 'w') as fp:
+        with open(path.join(output_dir, 'cnn-{}.json'.format(batch_i+1)), 'w') as fp:
             json.dump(articles, fp, indent=4)
 
     print('Successful docs total: {}, error docs total: {}', len(files), len(files) - error_docs)
