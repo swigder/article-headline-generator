@@ -12,7 +12,7 @@ from os import listdir, path
 import chardet
 
 
-def read_cnn_data(input_dir, output_dir, batch_size=5000):
+def read_cnn_data(input_dir, output_dir, charset=None, batch_size=5000):
     files = [path.join(input_dir, f) for f in listdir(cnn_dir)]
     print('Found', len(files), 'files...')
 
@@ -25,28 +25,35 @@ def read_cnn_data(input_dir, output_dir, batch_size=5000):
     cnn_len_title = len(' - CNN.com')
     cnn_len_body = len('(CNN) -- ')
     num_batches = ceil(len(files) / batch_size)
+    error_docs = 0
     for i, batch in enumerate(chunks(files, batch_size)):
         print('Processing batch {}/{}'.format(i+1, num_batches))
+        error_docs_batch = 0
         articles = []
-        for file in batch:
+        for j, file in enumerate(batch):
             try:
                 with open(file, 'rb') as f:
                     story_bytes = f.read()
-                    encoding = chardet.detect(story_bytes)['encoding']
+                    encoding = chardet.detect(story_bytes)['encoding'] if charset is None else charset
                     soup = BeautifulSoup(story_bytes, 'html.parser', from_encoding=encoding)
                     title = soup.find('title').text
                     if title.endswith(' - CNN.com'):
-                        title= title[:-cnn_len_title]
-                    body=ParseHtml(story_bytes.decode(encoding), 'cnn')
+                        title = title[:-cnn_len_title]
+                    body = ParseHtml(story_bytes.decode(encoding), 'cnn')
                     if body.startswith('(CNN) -- '):
                         body = body[cnn_len_body:]
                     articles.append(dict(headline=title, body=body))
             except Exception as e:
                 print('Error processing file', file)
                 print(e)
+                error_docs_batch += 1
+        print('Successful docs in batch: {}, error docs in batch: {}', len(batch), len(batch) - error_docs_batch)
+        error_docs += error_docs_batch
 
         with open(path.join(output_dir, 'cnn-{}.json'.format(i+1)), 'w') as fp:
             json.dump(articles, fp, indent=4)
+
+    print('Successful docs total: {}, error docs total: {}', len(files), len(files) - error_docs)
 
 
 def ParseHtml(story, corpus, encoding='utf-8'):
@@ -161,4 +168,4 @@ if __name__ == '__main__':
     cnn_dir = sys.argv[1]
     output_dir = sys.argv[2]
     print('Input dir {}, output dir {}'.format(cnn_dir, output_dir))
-    read_cnn_data(cnn_dir, output_dir)
+    read_cnn_data(cnn_dir, output_dir, charset='utf-8')

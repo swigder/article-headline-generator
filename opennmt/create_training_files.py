@@ -82,6 +82,9 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--test_pct', type=float, help='percent test data', default=.1)
     args = parser.parse_args()
 
+    print('Got the following arguments:', args)
+    input('Press any key to continue...')
+
     samples = get_all_samples()
     samples = process_samples(samples, max_length=args.max_length, pos_tag=args.pos_tag, pos_tag_tgt=args.pos_tag_tgt)
     training, validation, test = split(samples, validation_pct=args.val_pct, test_pct=args.test_pct)
