@@ -1,12 +1,13 @@
 import csv
 import json
 import random
-
 import re
+from collections import namedtuple
+
 from bs4 import BeautifulSoup
 
 
-from data.language import Sample
+Sample = namedtuple('Sample', ['headline', 'body'])
 
 
 def read_event_registry_data(*files):

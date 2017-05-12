@@ -1,7 +1,7 @@
 import random
 
-from data.prepare_data import prepare_data_index_lang, prepare_data_embedding_lang
 from data.read_data import read_crowdflower_wikipedia_data
+from rnn.prepare_data import prepare_data_index_lang, prepare_data_embedding_lang
 
 
 def evaluate_randomly(data_set, lang, encoder, decoder, evaluate, n=10):

@@ -1,5 +1,7 @@
-from data.embedding_language import GloveLang
-from data.language import Lang, Sample, normalize
+from data.read_data import Sample
+from rnn.embedding_language import GloveLang
+
+from rnn.language import Lang, normalize
 from rnn.rnn import MAX_LENGTH
 
 

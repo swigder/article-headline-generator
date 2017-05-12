@@ -1,10 +1,8 @@
-import unicodedata
-
 import re
 
 from nltk import pos_tag, word_tokenize
 
-from data.language import Sample
+from data.read_data import Sample
 
 
 def cut_length(string, words):

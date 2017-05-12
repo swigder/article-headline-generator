@@ -1,15 +1,13 @@
-import time
-from torch import nn, torch
-from torch.autograd import Variable
-import torch.nn.functional as F
-
 import random
+import time
 
 import numpy as np
+import torch.nn.functional as F
+from torch import nn, torch
+from torch.autograd import Variable
 
-from data.language import EOS_token, SOS_token
+from rnn.language import EOS_token, SOS_token
 from util.time import time_since
-
 
 MAX_LENGTH = 500
 
