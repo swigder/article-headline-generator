@@ -33,11 +33,11 @@ def cut_length(string, words):
 
 def normalize(string, max_length=None):
     string = unicode_to_ascii(string.lower().strip())
-    if max_length:
-        string = cut_length(string, max_length)
     string = re.sub(r"([.!?])", r" \1", string)
     string = re.sub(r"[^a-zA-Z\d.!?]+", r" ", string)
     string = re.sub(r"\d\d\d\d+", r"#", string)
+    if max_length:
+        string = cut_length(string, max_length)
     return string
 
 
