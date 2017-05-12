@@ -2,6 +2,8 @@ import json
 from itertools import chain
 
 import sys
+from math import ceil
+
 from bs4 import BeautifulSoup
 
 from lxml import html
@@ -10,28 +12,41 @@ from os import listdir, path
 import chardet
 
 
-def read_cnn_data(files):
-    articles = []
+def read_cnn_data(input_dir, output_dir, batch_size=5000):
+    files = [path.join(input_dir, f) for f in listdir(cnn_dir)]
+    print('Found', len(files), 'files...')
+
+    def chunks(l, n):
+        """Yield successive n-sized chunks from l."""
+        """from http://stackoverflow.com/a/312464"""
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
+
     cnn_len_title = len(' - CNN.com')
     cnn_len_body = len('(CNN) -- ')
-    for file in files:
-        try:
-            with open(file, 'rb') as f:
-                story_bytes = f.read()
-                encoding = chardet.detect(story_bytes)['encoding']
-                soup = BeautifulSoup(story_bytes, 'html.parser', from_encoding=encoding)
-                title = soup.find('title').text
-                if title.endswith(' - CNN.com'):
-                    title= title[:-cnn_len_title]
-                body=ParseHtml(story_bytes.decode(encoding), 'cnn')
-                if body.startswith('(CNN) -- '):
-                    body = body[cnn_len_body:]
-                articles.append(dict(headline=title, body=body))
-        except Exception as e:
-            print('Error processing file', file)
-            print(e)
+    num_batches = ceil(len(files) / batch_size)
+    for i, batch in enumerate(chunks(files, batch_size)):
+        print('Processing batch {}/{}'.format(i+1, num_batches))
+        articles = []
+        for file in batch:
+            try:
+                with open(file, 'rb') as f:
+                    story_bytes = f.read()
+                    encoding = chardet.detect(story_bytes)['encoding']
+                    soup = BeautifulSoup(story_bytes, 'html.parser', from_encoding=encoding)
+                    title = soup.find('title').text
+                    if title.endswith(' - CNN.com'):
+                        title= title[:-cnn_len_title]
+                    body=ParseHtml(story_bytes.decode(encoding), 'cnn')
+                    if body.startswith('(CNN) -- '):
+                        body = body[cnn_len_body:]
+                    articles.append(dict(headline=title, body=body))
+            except Exception as e:
+                print('Error processing file', file)
+                print(e)
 
-    return articles
+        with open(path.join(output_dir, 'cnn-{}.json'.format(i+1)), 'w') as fp:
+            json.dump(articles, fp, indent=4)
 
 
 def ParseHtml(story, corpus, encoding='utf-8'):
@@ -144,6 +159,6 @@ def ParseHtml(story, corpus, encoding='utf-8'):
 
 if __name__ == '__main__':
     cnn_dir = sys.argv[1]
-    samples = read_cnn_data([path.join(cnn_dir, f) for f in listdir(cnn_dir) if f.endswith('.html')])
-    with open('../data/cnn.json', 'w') as fp:
-        json.dump(samples, fp, indent=4)
+    output_dir = sys.argv[2]
+    print('Input dir {}, output dir {}'.format(cnn_dir, output_dir))
+    read_cnn_data(cnn_dir, output_dir)
