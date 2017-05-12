@@ -1,46 +1,49 @@
 import json
 from itertools import chain
-import re
+
+import sys
 from bs4 import BeautifulSoup
 
 from lxml import html
 from os import listdir, path
 
-from data.language import Sample
-from data.read_data import read_event_registry_data
+import chardet
 
 
 def read_cnn_data(files):
     articles = []
     cnn_len_title = len(' - CNN.com')
-    cnn_len_body=len('(CNN) -- ')
+    cnn_len_body = len('(CNN) -- ')
     for file in files:
         try:
-            soup = BeautifulSoup(open(file), 'html.parser')
-            title = soup.find('title').text
-            if title.endswith(' - CNN.com'):
-                title= title[:-cnn_len_title]
-            with open(file) as f:
-                story_html = f.read()
-                body=ParseHtml(story_html,'cnn')
+            with open(file, 'rb') as f:
+                story_bytes = f.read()
+                encoding = chardet.detect(story_bytes)['encoding']
+                soup = BeautifulSoup(story_bytes, 'html.parser', from_encoding=encoding)
+                title = soup.find('title').text
+                if title.endswith(' - CNN.com'):
+                    title= title[:-cnn_len_title]
+                body=ParseHtml(story_bytes.decode(encoding), 'cnn')
                 if body.startswith('(CNN) -- '):
-                 body = body[cnn_len_body:]
-            articles.append(dict(headline=title, body=body))
-        except:
-            print(file)
+                    body = body[cnn_len_body:]
+                articles.append(dict(headline=title, body=body))
+        except Exception as e:
+            print('Error processing file', file)
+            print(e)
 
     return articles
 
-def ParseHtml(story, corpus): # from
+
+def ParseHtml(story, corpus, encoding='utf-8'):
+    """Adapted from https://github.com/deepmind/rc-data"""
     """Parses the HTML of a news story.
     Args:
-      story: The raw Story to be parsed.
+      story: The raw HTML to be parsed.
       corpus: Either 'cnn' or 'dailymail'.
     Returns:
       A Story containing URL, paragraphs and highlights.
     """
-
-    parser = html.HTMLParser(encoding='utf-8')
+    parser = html.HTMLParser(encoding=encoding)
     tree = html.document_fromstring(story, parser=parser)
 
     # Elements to delete.
@@ -138,15 +141,9 @@ def ParseHtml(story, corpus): # from
 
     return '\n'.join(paragraphs)
 
-if __name__ == '__main__':
-    # url = '/Users/kidcom/PycharmProjects/pytorch-tutorial/cnn/00a2aef1e18d125960da51e167a3d22ed8416c09.html'
-    # samples = read_cnn_data(url)
-    # print(samples)
-    # print(json.dumps(samples))
-    # with open('../data/cnn.json', 'w') as fp:
-    #     json.dump(samples, fp, indent=4)
 
-    er_dir = '/Users/kidcom/PycharmProjects/pytorch-tutorial/cnn'
-    samples =read_cnn_data([path.join(er_dir, f) for f in listdir(er_dir) if f.endswith('.html')])
+if __name__ == '__main__':
+    cnn_dir = sys.argv[1]
+    samples = read_cnn_data([path.join(cnn_dir, f) for f in listdir(cnn_dir) if f.endswith('.html')])
     with open('../data/cnn.json', 'w') as fp:
         json.dump(samples, fp, indent=4)
