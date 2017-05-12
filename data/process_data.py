@@ -7,17 +7,22 @@ from nltk import pos_tag, word_tokenize
 from data.language import Sample
 
 
-def unicode_to_ascii(s):
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', s)
-        if unicodedata.category(c) != 'Mn'
-    )
+def cut_length(string, words):
+    if len(string) < words:
+        return string
+    spaces = 0
+    for i, c in enumerate(string):
+        if c.isspace():
+            spaces += 1
+            if spaces == words:
+                return string[:i]
+    return string
 
 
 def normalize(string, max_length=None):
-    string = unicode_to_ascii(string.lower().strip())
+    string = string.lower().strip()
     if max_length:
-        string = ' '.join(word_tokenize(string)[:max_length])
+        string = cut_length(string, max_length)
     string = re.sub(r"([.!?])", r" \1", string)
     string = re.sub(r"[^a-zA-Z\d.!?]+", r" ", string)
     string = re.sub(r"\d\d\d\d+", r"#", string)

@@ -85,9 +85,9 @@ if __name__ == '__main__':
     print('Got the following arguments:', args)
     input('Press any key to continue...')
 
-    samples = get_all_samples()
-    samples = process_samples(samples, max_length=args.max_length, pos_tag=args.pos_tag, pos_tag_tgt=args.pos_tag_tgt)
-    training, validation, test = split(samples, validation_pct=args.val_pct, test_pct=args.test_pct)
+    all_samples = get_all_samples()
+    all_samples = process_samples(all_samples, max_length=args.max_length, pos_tag=args.pos_tag, pos_tag_tgt=args.pos_tag_tgt)
+    training, validation, test = split(all_samples, validation_pct=args.val_pct, test_pct=args.test_pct)
     write_samples_to_opennmt_format(samples_training=training,
                                     samples_validation=validation,
                                     samples_test=test,
