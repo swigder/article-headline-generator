@@ -37,13 +37,13 @@ def read_cnn_data(input_dir, output_dir, batch_size=5000):
                 print('Error processing file {}:{} at {}'.format(batch_i, file_i, file))
                 print(e)
                 error_docs_batch += 1
-        print('Successful docs in batch: {}, error docs in batch: {}', len(batch), len(batch) - error_docs_batch)
+        print('Successful docs in batch: {}, error docs in batch: {}'.format(len(batch), len(batch) - error_docs_batch))
         error_docs += error_docs_batch
 
         with open(path.join(output_dir, 'cnn-{}.json'.format(batch_i+1)), 'w') as fp:
             json.dump(articles, fp, indent=4)
 
-    print('Successful docs total: {}, error docs total: {}', len(files), len(files) - error_docs)
+    print('Successful docs total: {}, error docs total: {}'.format(len(files), len(files) - error_docs))
 
 
 def read_file_guessing_charsets(file, charsets):
