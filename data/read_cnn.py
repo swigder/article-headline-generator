@@ -12,7 +12,7 @@ from os import listdir, path
 import chardet
 
 
-def read_cnn_data(input_dir, output_dir, charset=None, batch_size=5000):
+def read_cnn_data(input_dir, output_dir, batch_size=5000):
     files = [path.join(input_dir, f) for f in listdir(cnn_dir)]
     print('Found', len(files), 'files...')
 
@@ -22,8 +22,6 @@ def read_cnn_data(input_dir, output_dir, charset=None, batch_size=5000):
         for i in range(0, len(l), n):
             yield l[i:i + n]
 
-    cnn_len_title = len(' - CNN.com')
-    cnn_len_body = len('(CNN) -- ')
     num_batches = ceil(len(files) / batch_size)
     error_docs = 0
     for batch_i, batch in enumerate(chunks(files, batch_size)):
@@ -31,20 +29,12 @@ def read_cnn_data(input_dir, output_dir, charset=None, batch_size=5000):
         error_docs_batch = 0
         articles = []
         for file_i, file in enumerate(batch):
+            if file_i and not file_i % 1000:
+                print('Processing file {}/{} of batch'.format(file_i, len(batch)))
             try:
-                with open(file, 'rb') as f:
-                    story_bytes = f.read()
-                    encoding = chardet.detect(story_bytes)['encoding'] if charset is None else charset
-                    soup = BeautifulSoup(story_bytes, 'html.parser', from_encoding=encoding)
-                    title = soup.find('title').text
-                    if title.endswith(' - CNN.com'):
-                        title = title[:-cnn_len_title]
-                    body = ParseHtml(story_bytes.decode(encoding), 'cnn')
-                    if body.startswith('(CNN) -- '):
-                        body = body[cnn_len_body:]
-                    articles.append(dict(headline=title, body=body))
+                articles.append(read_file_guessing_charsets(file, ['utf-8', 'ISO-8859-1', None]))
             except Exception as e:
-                print('Error processing file', file)
+                print('Error processing file {}:{} at {}'.format(batch_i, file_i, file))
                 print(e)
                 error_docs_batch += 1
         print('Successful docs in batch: {}, error docs in batch: {}', len(batch), len(batch) - error_docs_batch)
@@ -54,6 +44,42 @@ def read_cnn_data(input_dir, output_dir, charset=None, batch_size=5000):
             json.dump(articles, fp, indent=4)
 
     print('Successful docs total: {}, error docs total: {}', len(files), len(files) - error_docs)
+
+
+def read_file_guessing_charsets(file, charsets):
+    """
+    Try to read a file guessing at the charsets. This is faster than trying to determine the charset for each file,
+    :param file: file to parse
+    :param charsets: list of charsets to guess in likelihood order. pass None at the end of the list to use chardet if
+    all else fails
+    :return: parsed file
+    """
+    for charset in charsets:
+        try:
+            return read_file(file, charset)
+        except Exception as e:
+            continue
+    raise e
+
+
+cnn_len_title = len(' - CNN.com')
+cnn_len_body = len('(CNN) -- ')
+
+
+def read_file(file, charset=None):
+    with open(file, 'rb') as f:
+        story_bytes = f.read()
+        encoding = chardet.detect(story_bytes)['encoding'] if not charset else charset
+        if not charset:
+            print(encoding)
+        soup = BeautifulSoup(story_bytes, 'html.parser', from_encoding=encoding)
+        title = soup.find('title').text
+        if title.endswith(' - CNN.com'):
+            title = title[:-cnn_len_title]
+        body = ParseHtml(story_bytes.decode(encoding), 'cnn')
+        if body.startswith('(CNN) -- '):
+            body = body[cnn_len_body:]
+        return dict(headline=title, body=body)
 
 
 def ParseHtml(story, corpus, encoding='utf-8'):
@@ -168,4 +194,4 @@ if __name__ == '__main__':
     cnn_dir = sys.argv[1]
     output_dir = sys.argv[2]
     print('Input dir {}, output dir {}'.format(cnn_dir, output_dir))
-    read_cnn_data(cnn_dir, output_dir, charset='utf-8')
+    read_cnn_data(cnn_dir, output_dir)
