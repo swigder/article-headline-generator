@@ -36,6 +36,15 @@ def read_event_registry_data(*files):
     return articles
 
 
+def read_cnn_data(*files):
+    articles = []
+    for file in files:
+        with open(file) as data_file:
+            data = json.load(data_file)
+            [articles.append(Sample(headline=a['headline'], body=a['body'])) for a in data]
+    return articles
+
+
 def read_reuters_data(*files):
     # http://www.daviddlewis.com/resources/testcollections/reuters21578/
     articles = []
@@ -90,5 +99,9 @@ if __name__ == '__main__':
 
     samples = read_reuters_data('../../data/reuters21578/reut2-000.sgm')
     print('\nReuters', len(samples), 'samples')
+    print(random.choice(samples))
+
+    samples = read_cnn_data('/Users/xx/Files/opennmt/data/cnn/processed/cnn-1.json')
+    print('\nCNN', len(samples), 'samples')
     print(random.choice(samples))
 

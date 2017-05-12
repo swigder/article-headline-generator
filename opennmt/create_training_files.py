@@ -6,7 +6,7 @@ from random import shuffle, seed
 
 from data.process_data import normalize_samples, pos_tag_samples
 from data.read_data import read_event_registry_data, read_crowdflower_economic_data, read_crowdflower_wikipedia_data, \
-    read_reuters_data
+    read_reuters_data, read_cnn_data
 
 
 def write_samples_to_opennmt_format(samples_training, samples_validation, location, samples_test=None, prefix=''):
@@ -35,12 +35,14 @@ def remove_duplicate_headlines(samples):
 
 def get_all_samples():
     print('Reading samples...')
-    er_dir = '../../news-retriever/data'
-    samples = read_event_registry_data(*[path.join(er_dir, f) for f in listdir(er_dir) if f.endswith('.json')])
+    dir = '../../news-retriever/data'
+    samples = read_event_registry_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')])
     samples += read_crowdflower_economic_data('../../data/Full-Economic-News-DFE-839861.csv')
     samples += read_crowdflower_wikipedia_data('../../data/News-article-wikipedia-DFE.csv')
-    reuters_dir = '../../data/reuters21578'
-    samples += read_reuters_data(*[path.join(reuters_dir, f) for f in listdir(reuters_dir) if f.endswith('.sgm')])
+    dir = '../../data/reuters21578'
+    samples += read_reuters_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.sgm')])
+    dir = '/Users/xx/Files/opennmt/data/cnn/processed'
+    samples += read_cnn_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')])
     print('Found', len(samples), 'samples...')
     return samples
 
