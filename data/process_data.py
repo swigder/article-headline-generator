@@ -1,11 +1,25 @@
 import re
 
+import unicodedata
 from nltk import pos_tag, word_tokenize
 
 from data.read_data import Sample
 
 
+def unicode_to_ascii(string):
+    if len(string) == len(string.encode()):  # is ASCII
+        return string
+    else:
+        # Turn a Unicode string to plain ASCII, thanks to http://stackoverflow.com/a/518232/2809427
+        # slow so avoid if not necessary
+        return ''.join(
+            c for c in unicodedata.normalize('NFD', string)
+            if unicodedata.category(c) != 'Mn'
+        )
+
+
 def cut_length(string, words):
+    # ugly but fast
     if len(string) < words:
         return string
     spaces = 0
@@ -18,7 +32,7 @@ def cut_length(string, words):
 
 
 def normalize(string, max_length=None):
-    string = string.lower().strip()
+    string = unicode_to_ascii(string.lower().strip())
     if max_length:
         string = cut_length(string, max_length)
     string = re.sub(r"([.!?])", r" \1", string)
