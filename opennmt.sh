@@ -8,12 +8,14 @@ th preprocess.lua -train_src $DATA_DIR/$PREFIX-training-samples.txt -train_tgt $
 # Machine type: p2.xlarge
 # Spot price: .3 usually works
 
+KEY_FILE=../oregon.pem.txt # MODIFY FOR YOUR OWN KEYFILE
+
 # to move your data to the AWS machine
 HOST='' # ENTER THE MACHINE HERE
-scp -i ../oregon.pem.txt $DATA_DIR/$PREFIX-data-train.t7 ubuntu@$HOST:~/data
+scp -i $KEY_FILE $DATA_DIR/$PREFIX-data-train.t7 ubuntu@$HOST:~/data
 
 # to log on to the AWS machine
-ssh -i ../oregon.pem.txt ubuntu@$HOST
+ssh -i $KEY_FILE ubuntu@$HOST
 
 # on the AWS machine
 # skip these if using our AMI
