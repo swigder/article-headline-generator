@@ -1,32 +1,42 @@
-DATA_DIR=../data/own
-th tools/tokenize.lua < $DATA_DIR/training-samples.txt > $DATA_DIR/training-samples.txt.tok
-th tools/tokenize.lua < $DATA_DIR/training-target.txt > $DATA_DIR/training-target.txt.tok
-th tools/tokenize.lua < $DATA_DIR/validation-samples.txt > $DATA_DIR/validation-samples.txt.tok
-th tools/tokenize.lua < $DATA_DIR/validation-target.txt > $DATA_DIR/validation-target.txt.tok
-th preprocess.lua -train_src $DATA_DIR/training-samples.txt.tok -train_tgt $DATA_DIR/training-target.txt.tok -valid_src $DATA_DIR/validation-samples.txt.tok -valid_tgt $DATA_DIR/validation-target.txt.tok -src_seq_length 100 -tgt_seq_length 20 -save_data $DATA_DIR/own.t7-train.t7
-th train.lua -data $DATA_DIR/own.t7-train.t7-train.t7 -save_model ../models/train.t7 -save_every_epochs 4 -gpuid 1
+# on your machine, to preprocess data (that you have output using create_training_files)
+DATA_DIR=../data/own # MODIFY FOR YOUR OWN LOCATION
+PREFIX='' # ENTER YOUR PREFIX HERE
+th preprocess.lua -train_src $DATA_DIR/$PREFIX-training-samples.txt -train_tgt $DATA_DIR/$PREFIX-training-target.txt -valid_src $DATA_DIR/$PREFIX-validation-samples.txt -valid_tgt $DATA_DIR/$PREFIX-validation-target.txt -src_seq_length 100 -tgt_seq_length 20 -save_data $DATA_DIR/$PREFIX
 
+# get a spot request from AWS
+# AMI:  (Oregon)
+# Machine type: p2.xlarge
+# Spot price: .3 usually works
 
-HOST=ec2-52-88-197-194.us-west-2.compute.amazonaws.com
-scp -i ../oregon.pem.txt /Users/xx/Files/opennmt/data/own/*.tok ubuntu@$HOST:~/data
+# to move your data to the AWS machine
+HOST='' # ENTER THE MACHINE HERE
+scp -i ../oregon.pem.txt $DATA_DIR/$PREFIX-data-train.t7 ubuntu@$HOST:~/data
 
+# to log on to the AWS machine
+ssh -i ../oregon.pem.txt ubuntu@$HOST
+
+# on the AWS machine
+# skip these if using our AMI
 mkdir data
 mkdir models
 mkdir efs
 sudo apt-get install nfs-common
+# skip this if already mounted
 sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 fs-5b72a4f2.efs.us-west-2.amazonaws.com:/ efs
-ln -s efs/ubuntu ~/models/efs
-sudo nvidia-docker run -v ~/data:/var/data -v ~/models:/var/models -it harvardnlp/opennmt:8.0
+# start docker
+sudo nvidia-docker run -v ~/data:/var/data -v ~/models:/var/models -v ~/efs/ubuntu:/var/efs -it harvardnlp/opennmt:8.0
+
+# in docker
+# setup
 cd
 luarocks install tds
 git clone https://github.com/OpenNMT/OpenNMT
 cd OpenNMT
-PREFIX=pos-src
+# train - set your own training parameters
+PREFIX='' # ENTER YOUR PREFIX HERE
 th train.lua -data /var/data/$PREFIX-data-train.t7 -save_model /var/models/$PREFIX -save_every_epochs 4 -gpuid 1
-th translate.lua -model /var/models/train.t7 -src /var/data/$PREFIX-training-samples.txt -tgt /var/data/$PREFIX-training-target.txt -gpuid 1
-
-
-PREFIX=pos-src
-SUFFIX=.txt
-th preprocess.lua -train_src $DATA_DIR/$PREFIX-training-samples$SUFFIX -train_tgt $DATA_DIR/$PREFIX-training-target$SUFFIX -valid_src $DATA_DIR/$PREFIX-validation-samples$SUFFIX -valid_tgt $DATA_DIR/$PREFIX-validation-target$SUFFIX -src_seq_length 100 -tgt_seq_length 20 -save_data $DATA_DIR/$PREFIX-data
-th train.lua -data /var/data/case-data-train.t7 -save_model /var/models/case.t7 -save_every_epochs 6 -gpuid 1
+# translate - update the location of the model
+th translate.lua -model /var/models/${PREFIX}_epoch12*.t7 -src /var/data/$PREFIX-test-samples.txt -tgt /var/data/$PREFIX-test-target.txt -gpuid 1
+# save to efs
+mkdir /var/efs/$PREFIX
+mv /var/models/${PREFIX}_epoch12*.t7 /var/efs/$PREFIX
