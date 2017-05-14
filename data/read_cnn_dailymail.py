@@ -1,4 +1,5 @@
 import json
+import os
 from itertools import chain
 
 import sys
@@ -39,7 +40,7 @@ def read_data(input_files, output_dir, corpus, batch_size=5000, multicore=False)
         print_with_time('Splitting work among {} cores'.format(cores))
         pool = mp.Pool(processes=cores)
         successful_docs = pool.map(expand_process_batch, [dict(batch=batch, output_dir=output_dir, corpus=corpus,
-                                                               batch_number=batch_i+1)
+                                                               batch_number=batch_i+1, print_pid=True)
                                                           for batch_i, batch in enumerate(chunks(input_files, batch_size))])
 
     successful_docs = sum(successful_docs)
@@ -51,8 +52,8 @@ def expand_process_batch(args):
     return process_batch(**args)
 
 
-def process_batch(batch, output_dir, corpus, batch_number):
-    print_with_time('Processing batch {}'.format(batch_number))
+def process_batch(batch, output_dir, corpus, batch_number, print_pid=False):
+    print_with_time('Processing batch {}{}'.format(batch_number, ' (PID {})'.format(os.getpid()) if print_pid else ''))
     articles = []
     error_docs = 0
     for file_i, file in enumerate(batch):
