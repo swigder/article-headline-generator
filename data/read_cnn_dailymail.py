@@ -21,53 +21,54 @@ def chunks(l, n):
         yield l[i:i + n]
 
 
-def expand_read(args):
-    return read_data(**args)
+def print_with_time(string):
+    print(strftime("%Y-%m-%d %H:%M:%S", gmtime()), string)
 
 
-def read_data_multiprocess(input_files, output_dir, corpus, batch_size=5000):
-    print('Found {} input documents'.format(len(input_files)))
-    cores = mp.cpu_count()
-    core_batch_size = int(len(input_files) / cores)
-    batch_offset = ceil(core_batch_size/batch_size)
-    print('Splitting work among {} cores, each handling {} documents'.format(cores, core_batch_size))
-    pool = mp.Pool(processes=cores)
-    results = pool.map(expand_read, [dict(input_files=core_batch, output_dir=output_dir, corpus=corpus,
-                                     batch_size=batch_size, core=i, batch_offset=i*batch_offset)
-                              for i, core_batch in enumerate(chunks(input_files, core_batch_size))])
-    total_successful_docs = sum(results)
-    print('Total successful docs: {}, total error docs: {}'.format(total_successful_docs, len(input_files) - total_successful_docs))
-
-
-def read_data(input_files, output_dir, corpus, batch_size=5000, core=None, batch_offset=0):
-    core_prefix = '' if core is None else '(Core {}) '.format(core+1)
-
-    print(core_prefix + 'Found', len(input_files), 'files...')
-
+def read_data(input_files, output_dir, corpus, batch_size=5000, multicore=False):
     num_batches = ceil(len(input_files) / batch_size)
+    print_with_time('Found {} files, to be processed in {} batches'.format(len(input_files), num_batches))
+
     error_docs = 0
 
-    for batch_i, batch in enumerate(chunks(input_files, batch_size)):
-        print('{}{} Processing batch {}/{}'.format(core_prefix, strftime("%Y-%m-%d %H:%M:%S", gmtime()), batch_i+1, num_batches))
-        articles = []
-        for file_i, file in enumerate(batch):
-            if file_i and not file_i % 1000:
-                print('{}{} Processing file {}/{} of batch'.format(core_prefix, strftime("%Y-%m-%d %H:%M:%S", gmtime()), file_i, len(batch)))
-            try:
-                articles.append(read_file_guessing_charsets(file, corpus, ['utf-8', 'ISO-8859-1', None]))
-            except Exception as e:
-                print('{}Error processing file {}:{} at {}'.format(core_prefix, batch_i, file_i, file))
-                print(e)
-                error_docs += 1
+    if not multicore:
+        successful_docs = [process_batch(batch, output_dir, corpus, batch_i+1)
+                           for batch_i, batch in enumerate(chunks(input_files, batch_size))]
+    else:
+        cores = mp.cpu_count()
+        print_with_time('Splitting work among {} cores'.format(cores))
+        pool = mp.Pool(processes=cores)
+        successful_docs = pool.map(expand_process_batch, [dict(batch=batch, output_dir=output_dir, corpus=corpus,
+                                                               batch_number=batch_i+1)
+                                                          for batch_i, batch in enumerate(chunks(input_files, batch_size))])
 
-        filename = path.join(output_dir, '{}-{}.json'.format(corpus, batch_offset+batch_i+1))
-        print('{}Saving batch to {}'.format(core_prefix, filename))
-        with open(filename, 'w') as fp:
-            json.dump(articles, fp, indent=4)
-
-    successful_docs = len(input_files) - error_docs
-    print('{}Successful docs: {}, error docs: {}'.format(core_prefix, successful_docs, error_docs))
+    successful_docs = sum(successful_docs)
+    print_with_time('Total successful docs: {}, error docs: {}'.format(successful_docs, error_docs))
     return successful_docs
+
+
+def expand_process_batch(args):
+    return process_batch(**args)
+
+
+def process_batch(batch, output_dir, corpus, batch_number):
+    print_with_time('Processing batch {}'.format(batch_number))
+    articles = []
+    error_docs = 0
+    for file_i, file in enumerate(batch):
+        if file_i and not file_i % 1000:
+            print_with_time('Processing file {}/{} of batch {}'.format(file_i, len(batch), batch_number))
+        try:
+            articles.append(read_file_guessing_charsets(file, corpus, ['utf-8', 'ISO-8859-1', None]))
+        except Exception as e:
+            print('Error processing file {}:{} at {}'.format(batch_number, file_i, file))
+            print(e)
+            error_docs += 1
+    filename = path.join(output_dir, '{}-{}.json'.format(corpus, batch_number))
+    print_with_time('Saving batch to {}'.format(filename))
+    with open(filename, 'w') as fp:
+        json.dump(articles, fp, indent=4)
+    return len(batch) - error_docs
 
 
 def read_file_guessing_charsets(file, corpus, charsets):
@@ -219,10 +220,7 @@ if __name__ == '__main__':
     cnn_dm_dir = sys.argv[1]
     output_dir = sys.argv[2]
     corpus = sys.argv[3]
-    multiprocess = len(sys.argv) == 5 and sys.argv[4]
+    multicore = len(sys.argv) == 5 and sys.argv[4]
     print('Input dir {}, output dir {}'.format(cnn_dm_dir, output_dir))
     input_files = [path.join(cnn_dm_dir, f) for f in listdir(cnn_dm_dir)]
-    if multiprocess:
-        read_data_multiprocess(input_files, output_dir, corpus)
-    else:
-        read_data(input_files, output_dir, corpus)
+    read_data(input_files, output_dir, corpus, multicore=multicore)
