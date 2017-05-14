@@ -1,12 +1,11 @@
 import argparse
-import time
 
 from os import listdir, path
 from random import shuffle, seed
 
 from data.process_data import normalize_samples, pos_tag_samples
 from data.read_data import read_event_registry_data, read_crowdflower_economic_data, read_crowdflower_wikipedia_data, \
-    read_reuters_data, read_cnn_data
+    read_reuters_data, read_cnn_dailymail_data
 
 
 def write_samples_to_opennmt_format(samples_training, samples_validation, location, samples_test=None, prefix=''):
@@ -42,7 +41,9 @@ def get_all_samples():
     dir = '../../data/reuters21578'
     samples += read_reuters_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.sgm')])
     dir = '/Users/xx/Files/opennmt/data/cnn/processed'
-    samples += read_cnn_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')])
+    samples += read_cnn_dailymail_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')])
+    dir = '/Users/xx/Files/opennmt/data/dailymail/processed'
+    samples += read_cnn_dailymail_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')])
     print('Found', len(samples), 'samples...')
     return samples
 

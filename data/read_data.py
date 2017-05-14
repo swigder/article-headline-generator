@@ -36,7 +36,7 @@ def read_event_registry_data(*files):
     return articles
 
 
-def read_cnn_data(*files):
+def read_cnn_dailymail_data(*files):
     articles = []
     for file in files:
         with open(file) as data_file:
@@ -101,7 +101,11 @@ if __name__ == '__main__':
     print('\nReuters', len(samples), 'samples')
     print(random.choice(samples))
 
-    samples = read_cnn_data('/Users/xx/Files/opennmt/data/cnn/processed/cnn-1.json')
+    samples = read_cnn_dailymail_data('/Users/xx/Files/opennmt/data/cnn/processed/cnn-1.json')
     print('\nCNN', len(samples), 'samples')
+    print(random.choice(samples))
+
+    samples = read_cnn_dailymail_data('/Users/xx/Files/opennmt/data/dailymail/processed/dailymail-1.json')
+    print('\nDaily Mail', len(samples), 'samples')
     print(random.choice(samples))
 
