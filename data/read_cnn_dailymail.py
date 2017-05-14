@@ -61,7 +61,7 @@ def read_data(input_files, output_dir, corpus, batch_size=5000, core=None, batch
                 error_docs += 1
 
         filename = path.join(output_dir, '{}-{}.json'.format(corpus, batch_offset+batch_i+1))
-        print('{}Saving batch to {}', core_prefix, filename)
+        print('{}Saving batch to {}'.format(core_prefix, filename))
         with open(filename, 'w') as fp:
             json.dump(articles, fp, indent=4)
 
