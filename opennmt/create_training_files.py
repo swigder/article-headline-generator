@@ -26,49 +26,55 @@ def write_samples_to_opennmt_format(samples_training, samples_validation, locati
 
 def remove_duplicate_headlines(samples):
     headlines = set()
-    for sample in samples:
-        if sample.headline in headlines:
-            samples.remove(sample)
-        headlines.add(sample.headline)
+    for corpus in samples:
+        for sample in corpus:
+            if sample.headline in headlines:
+                corpus.remove(sample)
+            headlines.add(sample.headline)
 
 
 def get_all_samples():
     print('Reading samples...')
+    samples = []
     dir = '../../news-retriever/data'
-    samples = read_event_registry_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')])
-    samples += read_crowdflower_economic_data('../../data/Full-Economic-News-DFE-839861.csv')
-    samples += read_crowdflower_wikipedia_data('../../data/News-article-wikipedia-DFE.csv')
+    samples.append(read_event_registry_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')]))
+    samples.append(read_crowdflower_economic_data('../../data/Full-Economic-News-DFE-839861.csv'))
+    samples.append(read_crowdflower_wikipedia_data('../../data/News-article-wikipedia-DFE.csv'))
     dir = '../../data/reuters21578'
-    samples += read_reuters_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.sgm')])
+    samples.append(read_reuters_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.sgm')]))
     dir = '/Users/xx/Files/opennmt/data/cnn/processed'
-    samples += read_cnn_dailymail_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')])
+    samples.append(read_cnn_dailymail_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')]))
     dir = '/Users/xx/Files/opennmt/data/dailymail/processed'
-    samples += read_cnn_dailymail_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')])
-    print('Found', len(samples), 'samples...')
+    samples.append(read_cnn_dailymail_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')]))
+    print('Found', sum([len(s) for s in samples]), 'samples...')
     return samples
 
 
 def process_samples(samples, max_length=100, pos_tag=False, pos_tag_tgt=False):
     print('Normalizing...')
-    samples = normalize_samples(samples, max_length=max_length)
+    samples = [normalize_samples(corpus, max_length=max_length) for corpus in samples]
     print('Removing duplicate headlines...')
     remove_duplicate_headlines(samples)
-    print('Trimmed to', len(samples), 'samples by removing duplicate headlines')
+    print('Trimmed to', sum([len(s) for s in samples]), 'samples by removing duplicate headlines')
     if pos_tag:
         print('POS tagging...')
-        samples = pos_tag_samples(samples, tag_tgt=pos_tag_tgt)
+        samples = [pos_tag_samples(corpus, tag_tgt=pos_tag_tgt) for corpus in samples]
     return samples
 
 
 def split(samples, validation_pct, test_pct):
-    seed(448)
-    shuffle(samples)
-    total_samples = len(samples)
-    training_boundary = int(total_samples*(1.0-validation_pct-test_pct))
-    test_boundary = int(total_samples*(1.0-test_pct))
-    training_samples = samples[:training_boundary]
-    validation_samples = samples[training_boundary:test_boundary]
-    test_samples = samples[test_boundary:]
+    training_samples = []
+    validation_samples = []
+    test_samples = []
+    for corpus_samples in samples:
+        seed(448)
+        shuffle(corpus_samples)
+        total_samples = len(corpus_samples)
+        training_boundary = int(total_samples*(1.0-validation_pct-test_pct))
+        test_boundary = int(total_samples*(1.0-test_pct))
+        training_samples += corpus_samples[:training_boundary]
+        validation_samples += corpus_samples[training_boundary:test_boundary]
+        test_samples += corpus_samples[test_boundary:]
     print('Split into {} training samples, {} validation samples, {} test samples'
           .format(len(training_samples), len(validation_samples), len(test_samples)))
     return training_samples, validation_samples, test_samples
