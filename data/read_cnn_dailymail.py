@@ -60,7 +60,6 @@ def read_data(input_files, output_dir, corpus, batch_size=5000, core=None, batch
                 print(e)
                 error_docs += 1
 
-        print(batch_offset, batch_i)
         filename = path.join(output_dir, '{}-{}.json'.format(corpus, batch_offset+batch_i+1))
         print('{}Saving batch to {}', core_prefix, filename)
         with open(filename, 'w') as fp:
