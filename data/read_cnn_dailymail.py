@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 from itertools import chain
@@ -218,10 +219,16 @@ def ParseHtml(story, corpus, encoding='utf-8'):
 
 
 if __name__ == '__main__':
-    cnn_dm_dir = sys.argv[1]
-    output_dir = sys.argv[2]
-    corpus = sys.argv[3]
-    multicore = len(sys.argv) == 5 and sys.argv[4]
-    print('Input dir {}, output dir {}'.format(cnn_dm_dir, output_dir))
-    input_files = [path.join(cnn_dm_dir, f) for f in listdir(cnn_dm_dir)]
-    read_data(input_files, output_dir, corpus, multicore=multicore)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input', type=str, help='input directory')
+    parser.add_argument('output', type=str, help='output directory')
+    parser.add_argument('corpus', type=str, help='cnn or dailymail')
+    parser.add_argument('-b', '--batch_size', type=int, help='number of files per batch', default=5000)
+    parser.add_argument('-m', '--multicore', type=bool, help='whether to be multicore', default=False)
+    args = parser.parse_args()
+
+    print('Got the following arguments:', args)
+    input('Press any key to continue...')
+
+    input_files = [path.join(args.input, f) for f in listdir(args.input)]
+    read_data(input_files, args.output, args.corpus, batch_size=args.batch_size, multicore=args.multicore)
