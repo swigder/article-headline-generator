@@ -8,42 +8,70 @@ from bs4 import BeautifulSoup
 
 from lxml import html
 from os import listdir, path
+from time import gmtime, strftime
+import multiprocessing as mp
 
 import chardet
 
 
-def read_cnn_data(input_dir, output_dir, batch_size=5000):
-    files = [path.join(input_dir, f) for f in listdir(cnn_dir)]
-    print('Found', len(files), 'files...')
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    """from http://stackoverflow.com/a/312464"""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
-    def chunks(l, n):
-        """Yield successive n-sized chunks from l."""
-        """from http://stackoverflow.com/a/312464"""
-        for i in range(0, len(l), n):
-            yield l[i:i + n]
 
-    num_batches = ceil(len(files) / batch_size)
+def expand_read(args):
+    return read_data(**args)
+
+
+def read_data_multiprocess(input_files, output_dir, corpus, batch_size=5000):
+    print('Found {} input documents'.format(len(input_files)))
+    cores = mp.cpu_count()
+    core_batch_size = int(len(input_files) / cores)
+    batch_offset = ceil(core_batch_size/batch_size)
+    print('Splitting work among {} cores, each handling {} documents'.format(cores, core_batch_size))
+    pool = mp.Pool(processes=cores)
+    results = pool.map(expand_read, [dict(input_files=core_batch, output_dir=output_dir, corpus=corpus,
+                                     batch_size=batch_size, core=i, batch_offset=i*batch_offset)
+                              for i, core_batch in enumerate(chunks(input_files, core_batch_size))])
+    total_successful_docs = sum(results)
+    print('Total successful docs: {}, total error docs: {}'.format(total_successful_docs, len(input_files) - total_successful_docs))
+
+
+def read_data(input_files, output_dir, corpus, batch_size=5000, core=None, batch_offset=0):
+    core_prefix = '' if core is None else '(Core {}) '.format(core+1)
+
+    print(core_prefix + 'Found', len(input_files), 'files...')
+
+    num_batches = ceil(len(input_files) / batch_size)
     error_docs = 0
-    for batch_i, batch in enumerate(chunks(files, batch_size)):
-        print('Processing batch {}/{}'.format(batch_i+1, num_batches))
+
+    for batch_i, batch in enumerate(chunks(input_files, batch_size)):
+        print('{}{} Processing batch {}/{}'.format(core_prefix, strftime("%Y-%m-%d %H:%M:%S", gmtime()), batch_i+1, num_batches))
         articles = []
         for file_i, file in enumerate(batch):
             if file_i and not file_i % 1000:
-                print('Processing file {}/{} of batch'.format(file_i, len(batch)))
+                print('{}{} Processing file {}/{} of batch'.format(core_prefix, strftime("%Y-%m-%d %H:%M:%S", gmtime()), file_i, len(batch)))
             try:
-                articles.append(read_file_guessing_charsets(file, ['utf-8', 'ISO-8859-1', None]))
+                articles.append(read_file_guessing_charsets(file, corpus, ['utf-8', 'ISO-8859-1', None]))
             except Exception as e:
-                print('Error processing file {}:{} at {}'.format(batch_i, file_i, file))
+                print('{}Error processing file {}:{} at {}'.format(core_prefix, batch_i, file_i, file))
                 print(e)
                 error_docs += 1
 
-        with open(path.join(output_dir, 'cnn-{}.json'.format(batch_i+1)), 'w') as fp:
+        print(batch_offset, batch_i)
+        filename = path.join(output_dir, '{}-{}.json'.format(corpus, batch_offset+batch_i+1))
+        print('{}Saving batch to {}', core_prefix, filename)
+        with open(filename, 'w') as fp:
             json.dump(articles, fp, indent=4)
 
-    print('Successful docs: {}, error docs: {}'.format(len(files) - error_docs, error_docs))
+    successful_docs = len(input_files) - error_docs
+    print('{}Successful docs: {}, error docs: {}'.format(core_prefix, successful_docs, error_docs))
+    return successful_docs
 
 
-def read_file_guessing_charsets(file, charsets):
+def read_file_guessing_charsets(file, corpus, charsets):
     """
     Try to read a file guessing at the charsets. This is faster than trying to determine the charset for each file,
     :param file: file to parse
@@ -53,17 +81,18 @@ def read_file_guessing_charsets(file, charsets):
     """
     for charset in charsets:
         try:
-            return read_file(file, charset)
+            return read_file(file, corpus, charset)
         except Exception as e:
             continue
     raise e
 
 
-cnn_len_title = len(' - CNN.com')
+title_suffix = dict(cnn=' - CNN.com', dailymail='  | Mail Online')
+title_suffix_len = dict(cnn=len(title_suffix['cnn']), dailymail=len(title_suffix['dailymail']))
 cnn_len_body = len('(CNN) -- ')
 
 
-def read_file(file, charset=None):
+def read_file(file, corpus, charset=None):
     with open(file, 'rb') as f:
         story_bytes = f.read()
         encoding = chardet.detect(story_bytes)['encoding'] if not charset else charset
@@ -71,10 +100,10 @@ def read_file(file, charset=None):
             print(encoding)
         soup = BeautifulSoup(story_bytes, 'html.parser', from_encoding=encoding)
         title = soup.find('title').text
-        if title.endswith(' - CNN.com'):
-            title = title[:-cnn_len_title]
-        body = ParseHtml(story_bytes.decode(encoding), 'cnn')
-        if body.startswith('(CNN) -- '):
+        if title.endswith(title_suffix[corpus]):
+            title = title[:-title_suffix_len[corpus]]
+        body = ParseHtml(story_bytes.decode(encoding), corpus)
+        if corpus is 'cnn' and body.startswith('(CNN) -- '):
             body = body[cnn_len_body:]
         return dict(headline=title, body=body)
 
@@ -188,7 +217,13 @@ def ParseHtml(story, corpus, encoding='utf-8'):
 
 
 if __name__ == '__main__':
-    cnn_dir = sys.argv[1]
+    cnn_dm_dir = sys.argv[1]
     output_dir = sys.argv[2]
-    print('Input dir {}, output dir {}'.format(cnn_dir, output_dir))
-    read_cnn_data(cnn_dir, output_dir)
+    corpus = sys.argv[3]
+    multiprocess = len(sys.argv) == 5 and sys.argv[4]
+    print('Input dir {}, output dir {}'.format(cnn_dm_dir, output_dir))
+    input_files = [path.join(cnn_dm_dir, f) for f in listdir(cnn_dm_dir)]
+    if multiprocess:
+        read_data_multiprocess(input_files, output_dir, corpus)
+    else:
+        read_data(input_files, output_dir, corpus)
