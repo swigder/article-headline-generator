@@ -5,7 +5,7 @@ import re
 from collections import namedtuple
 
 from bs4 import BeautifulSoup
-
+from os import path, listdir
 
 Sample = namedtuple('Sample', ['headline', 'body'])
 
@@ -29,7 +29,8 @@ def read_event_registry_data(*files):
              for (k, v) in data.items()
              if 'error' not in v.keys()
              and v['info']['id'] not in processed
-             and v['info']['url'] is not 'http://www.theaustralian.com.au/video']
+             and v['info']['url'] is not 'http://www.theaustralian.com.au/video'
+             and 'Reuters' not in v['info']['source']['title']]
             [processed.add(v['info']['id'])
              for (k, v) in data.items()
              if 'error' not in v.keys()]
