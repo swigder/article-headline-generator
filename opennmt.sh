@@ -12,7 +12,7 @@ KEY_FILE=../oregon.pem.txt # MODIFY FOR YOUR OWN KEYFILE
 
 # to move your data to the AWS machine
 HOST='' # ENTER THE MACHINE HERE
-scp -i $KEY_FILE $DATA_DIR/$PREFIX-data-train.t7 ubuntu@$HOST:~/data
+scp -i $KEY_FILE $DATA_DIR/$PREFIX-train.t7 ubuntu@$HOST:~/data
 
 # to log on to the AWS machine
 ssh -i $KEY_FILE ubuntu@$HOST
@@ -39,10 +39,10 @@ cd OpenNMT
 # train - set your own training parameters
 PREFIX='' # ENTER YOUR PREFIX HERE
 mkdir /var/efs/$PREFIX
-th train.lua -data /var/data/$PREFIX-data-train.t7 -save_model /var/efs/$PREFIX -save_every_epochs 1 -gpuid 1 | tee /var/efs/$PREFIX/output-$(date +"%y%m%d-%H:%M").txt
+th train.lua -data /var/data/$PREFIX-train.t7 -save_model /var/efs/$PREFIX/$PREFIX -save_every_epochs 1 -gpuid 1 | tee /var/efs/$PREFIX/output-$(date +"%y%m%d-%H:%M").txt
 # translate - update the location of the model
-th translate.lua -model /var/models/${PREFIX}_epoch12*.t7 -src /var/data/$PREFIX-test-samples.txt -tgt /var/data/$PREFIX-test-target.txt -gpuid 1
+th translate.lua -model /var/models/${PREFIX}_epoch12*.t7 -src /var/data/$PREFIX-test-samples.txt -tgt /var/data/$PREFIX-test-target.txt -gpuid 1 | tee /var/efs/$PREFIX/translation-$(date +"%y%m%d-%H:%M").txt
 
 # to exit tmux - CTRL-B D
 # to reenter tmux
-tmux attach-session -A -s TRAINING
+tmux new-session -A -s TRAINING

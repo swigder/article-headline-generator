@@ -1,7 +1,7 @@
 import re
 
 import unicodedata
-from nltk import pos_tag
+from nltk import pos_tag, word_tokenize
 
 from data.read_data import Sample
 
@@ -48,10 +48,12 @@ def normalize_samples(samples, max_length=None):
     return normalized_samples
 
 
-def pos_tag_samples(samples, tag_tgt=False):
-    pos = lambda s: " ".join(['{}{}{}'.format(w, "\N{Halfwidth Forms Light Vertical}", t) for w, t in pos_tag(s.split(' '))])
+def pos_tag_samples(samples, tag_tgt=False, max_length=None):
+    pos = lambda s: " ".join(['{}{}{}'.format(w, "\N{Halfwidth Forms Light Vertical}", t) for w, t in pos_tag(word_tokenize(s))])
 
     tagged_samples = []
-    for sample in samples:
-        tagged_samples.append(Sample(headline=pos(sample.headline) if tag_tgt else sample.headline, body=pos(sample.body)))
+    for i, sample in enumerate(samples):
+        if i % 1000 == 0:
+            print('POS tagging', i)
+        tagged_samples.append(Sample(headline=pos(sample.headline) if tag_tgt else sample.headline, body=pos(sample.body)[:max_length]))
     return tagged_samples
