@@ -38,7 +38,7 @@ def parse_file(file):
             if not match:
                 continue
             output_type, output_i, output_text = match.group(1, 2, 3)
-            output_i = int(output_i)
+            output_i, output_text = int(output_i), output_text.strip()
             if output_type == previous.type:
                 raise Exception('current: {}, previous: {}'.format(output_type, previous.type))
             if output_type == 'GOLD':
@@ -47,17 +47,30 @@ def parse_file(file):
             elif output_type == 'PRED':
                 if output_i != previous.i:
                     raise Exception('current: {}, previous: {}'.format(output_i, previous.i))
+                if output_text.endswith(' daily mail online'):
+                    output_text = output_text[:-len(' daily mail online')]
                 translations.append(Translation(gold=previous.text.strip(), predicted=output_text.strip()))
             previous = Previous(i=output_i, text=output_text, type=output_type)
     return translations
 
 
+def output_to_meteor(translations, output_location):
+    gold = [t.gold for t in translations]
+    pred = [t.predicted for t in translations]
+
+    with open(output_location + '-gold.txt', 'w') as f:
+        f.write('\n'.join(gold))
+    with open(output_location + '-pred.txt', 'w') as f:
+        f.write('\n'.join(pred))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('input', type=str, help='file output of the translator')
+    parser.add_argument('-m', '--meteor', type=str, help='output location for meteor files (directory and file prefix)')
     args = parser.parse_args()
 
     translations = parse_file(args.input)
 
-    for t in translations[:10]:
-        print(t)
+    if args.meteor:
+        output_to_meteor(translations, args.meteor)
