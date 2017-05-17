@@ -49,6 +49,29 @@ def parse_file(file):
                 continue
     return Training(parameters=None, epochs=epochs, time=end_time-start_time)
 
+def write_mat_file():
+    fileOutput = open("matfile.txt", "w")
+
+    for epoch in training.epochs:
+        mean_training_perplexity = mean(epoch.training_perplexities)
+        mean_train_perplex = str(mean_training_perplexity)
+
+        training_perplexities = (epoch.training_perplexities[-1])
+        train_perplex = str(training_perplexities)
+
+        validation_perplexities = (epoch.validation_perplexity)
+        val_perplexity = str(validation_perplexities)
+
+        fileOutput.write(mean_train_perplex)
+        fileOutput.write("\t")
+        fileOutput.write(train_perplex)
+        fileOutput.write("\t")
+        fileOutput.write(val_perplexity)
+        fileOutput.write("\n")
+
+
+        print(mean(epoch.training_perplexities), epoch.training_perplexities[-1], epoch.validation_perplexity)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -56,6 +79,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     training = parse_file(args.input)
+    write_mat_file()
 
-    for epoch in training.epochs:
-        print(mean(epoch.training_perplexities), epoch.training_perplexities[-1], epoch.validation_perplexity)
+
+
