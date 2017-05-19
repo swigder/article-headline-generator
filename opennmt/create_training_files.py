@@ -5,7 +5,7 @@ from random import shuffle, seed
 
 from data.process_data import normalize_samples, pos_tag_samples
 from data.read_data import read_event_registry_data, read_crowdflower_economic_data, read_crowdflower_wikipedia_data, \
-    read_reuters_data, read_cnn_dailymail_data
+    read_reuters_data, read_cnn_dailymail_data, Sample
 
 
 def write_samples_to_opennmt_format(samples_training, samples_validation, location, samples_test=None, prefix=''):
@@ -33,20 +33,36 @@ def remove_duplicate_headlines(samples):
             headlines.add(sample.headline)
 
 
-def get_all_samples():
+def read_samples(samples_location, target_location):
+    with open(samples_location) as f:
+        samples = f.readlines()
+    with open(target_location) as f:
+        target = f.readlines()
+    return [Sample(headline=t.strip(), body=s.strip()) for s, t in zip(samples, target)]
+
+
+def get_all_samples(from_data=None):
     print('Reading samples...')
     samples = []
-    dir = '../../news-retriever/data'
-    samples.append(read_event_registry_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')]))
-    samples.append(read_crowdflower_economic_data('../../data/Full-Economic-News-DFE-839861.csv'))
-    samples.append(read_crowdflower_wikipedia_data('../../data/News-article-wikipedia-DFE.csv'))
-    dir = '../../data/reuters21578'
-    samples.append(read_reuters_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.sgm')]))
-    dir = '/Users/xx/Files/opennmt/data/cnn/processed'
-    samples.append(read_cnn_dailymail_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')]))
-    dir = '/Users/xx/Files/opennmt/data/dailymail/processed'
-    samples.append(read_cnn_dailymail_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')]))
-    print('Found', sum([len(s) for s in samples]), 'samples...')
+    if not from_data:
+        dir = '../../news-retriever/data'
+        samples.append(read_event_registry_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')]))
+        samples.append(read_crowdflower_economic_data('../../data/Full-Economic-News-DFE-839861.csv'))
+        samples.append(read_crowdflower_wikipedia_data('../../data/News-article-wikipedia-DFE.csv'))
+        dir = '../../data/reuters21578'
+        samples.append(read_reuters_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.sgm')]))
+        dir = '/Users/xx/Files/opennmt/data/cnn/processed'
+        samples.append(read_cnn_dailymail_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')]))
+        dir = '/Users/xx/Files/opennmt/data/dailymail/processed'
+        samples.append(read_cnn_dailymail_data(*[path.join(dir, f) for f in listdir(dir) if f.endswith('.json')]))
+        print('Found', sum([len(s) for s in samples]), 'samples...')
+    elif from_data:
+        samples.append(read_samples(samples_location=from_data + '-training-samples.txt',
+                                    target_location=from_data + '-training-target.txt'))
+        samples.append(read_samples(samples_location=from_data + '-validation-samples.txt',
+                                    target_location=from_data + '-validation-target.txt'))
+        samples.append(read_samples(samples_location=from_data + '-test-samples.txt',
+                                    target_location=from_data + '-test-target.txt'))
     return samples
 
 
@@ -83,6 +99,7 @@ def split(samples, validation_pct, test_pct):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-o', '--output', required=True, type=str, help='output directory')
+    parser.add_argument('-f', '--from_data', type=str, help='from prefix')
     parser.add_argument('-x', '--prefix', type=str, help='output filename prefix', default='')
     parser.add_argument('-m', '--max_length', type=int, help='max length of src', default=100)
     parser.add_argument('-p', '--pos_tag', type=bool, help='POS tag the source data', default=False)
@@ -94,9 +111,9 @@ if __name__ == '__main__':
     print('Got the following arguments:', args)
     input('Press any key to continue...')
 
-    all_samples = get_all_samples()
+    all_samples = get_all_samples(from_data=args.from_data)
     all_samples = process_samples(all_samples, max_length=args.max_length, pos_tag=args.pos_tag, pos_tag_tgt=args.pos_tag_tgt)
-    training, validation, test = split(all_samples, validation_pct=args.val_pct, test_pct=args.test_pct)
+    training, validation, test = split(all_samples, validation_pct=args.val_pct, test_pct=args.test_pct) if not args.from_data else all_samples
     write_samples_to_opennmt_format(samples_training=training,
                                     samples_validation=validation,
                                     samples_test=test,
