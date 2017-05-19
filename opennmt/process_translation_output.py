@@ -39,6 +39,8 @@ def parse_file(file):
                 continue
             output_type, output_i, output_text = match.group(1, 2, 3)
             output_i, output_text = int(output_i), output_text.strip()
+            if output_text.endswith(' daily mail online'):
+                output_text = output_text[:-len(' daily mail online')]
             if output_type == previous.type:
                 raise Exception('current: {}, previous: {}'.format(output_type, previous.type))
             if output_type == 'GOLD':
@@ -47,8 +49,6 @@ def parse_file(file):
             elif output_type == 'PRED':
                 if output_i != previous.i:
                     raise Exception('current: {}, previous: {}'.format(output_i, previous.i))
-                if output_text.endswith(' daily mail online'):
-                    output_text = output_text[:-len(' daily mail online')]
                 translations.append(Translation(gold=previous.text.strip(), predicted=output_text.strip()))
             previous = Previous(i=output_i, text=output_text, type=output_type)
     return translations
