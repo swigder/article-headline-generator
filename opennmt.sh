@@ -41,7 +41,7 @@ PREFIX='' # ENTER YOUR PREFIX HERE
 mkdir /var/efs/$PREFIX
 th train.lua -data /var/data/$PREFIX-train.t7 -save_model /var/efs/$PREFIX/$PREFIX -save_every_epochs 1 -gpuid 1 | tee /var/efs/$PREFIX/output-$(date +"%y%m%d-%H:%M").txt
 # translate - update the location of the model
-th translate.lua -model /var/models/${PREFIX}_epoch12*.t7 -src /var/data/$PREFIX-test-samples.txt -tgt /var/data/$PREFIX-test-target.txt -gpuid 1 | tee /var/efs/$PREFIX/translation-$(date +"%y%m%d-%H:%M").txt
+th translate.lua -model /var/efs/$PREFIX/${PREFIX}_epoch13*.t7 -src /var/data/$PREFIX-test-samples.txt -tgt /var/data/$PREFIX-test-target.txt -gpuid 1 | tee /var/efs/$PREFIX/translation-$(date +"%y%m%d-%H:%M").txt
 
 # to exit tmux - CTRL-B D
 # to reenter tmux

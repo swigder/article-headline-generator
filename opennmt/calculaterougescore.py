@@ -5,7 +5,8 @@ from rouge import FilesRouge
 def CalculateRouge(ref, hyp):
   files_rouge = FilesRouge(ref, hyp)
   scores = files_rouge.get_scores(avg= True)
-  print(scores)
+  print('Rouge-1: ', scores['rouge-1']['f'])
+  print('Rouge-L: ', scores['rouge-l']['f'])
 
 
 
